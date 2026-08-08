@@ -1,0 +1,27 @@
+name: FI Weekly Briefing
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"        # every Monday 02:00 UTC = 08:00 Bishkek
+  workflow_dispatch: {}         # adds a "Run workflow" button for manual tests
+
+jobs:
+  build-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - run: python fi_weekly.py --live --email
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "587"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
