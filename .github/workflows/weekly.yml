@@ -1,9 +1,9 @@
-name: FI Weekly Briefing
+name: G7 + EM Rates Weekly Briefing
 
 on:
   schedule:
-    - cron: "0 2 * * 1"        # every Monday 02:00 UTC = 08:00 Bishkek
-  workflow_dispatch: {}         # adds a "Run workflow" button for manual tests
+    - cron: "0 16 * * 0"        # every Sunday 16:00 UTC = 22:00 Bishkek (UTC+6)
+  workflow_dispatch: {}          # manual trigger from Actions tab
 
 jobs:
   build-and-send:
