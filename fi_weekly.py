@@ -32,6 +32,95 @@ except ImportError:
     import requests
 
 # ---------------------------------------------------------------------------
+# RSS FEEDS — central banks, Treasury, BLS (last 7 days)
+# ---------------------------------------------------------------------------
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+
+RSS_FEEDS = [
+    ("Federal Reserve",
+     "https://www.federalreserve.gov/feeds/press_all.xml"),
+    ("ECB",
+     "https://www.ecb.europa.eu/rss/press.html"),
+    ("Bank of England",
+     "https://www.bankofengland.co.uk/rss/news"),
+    ("US Treasury",
+     "https://home.treasury.gov/system/files/276/treasury_press_rss.xml"),
+    ("BLS",
+     "https://www.bls.gov/feed/bls_latest.rss"),
+]
+
+
+def pull_rss(days=7):
+    """Pull headlines + links from central bank RSS feeds, last `days` days.
+    Returns list of {source, title, link, date}. Fail soft per feed."""
+    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=days)
+    items = []
+    for source, url in RSS_FEEDS:
+        try:
+            r = requests.get(url, timeout=15, headers={
+                "User-Agent": "FI-Weekly-Brief/1.0"})
+            r.raise_for_status()
+            root = ET.fromstring(r.content)
+            # standard RSS 2.0: channel/item
+            for item in root.iter("item"):
+                title_el = item.find("title")
+                link_el = item.find("link")
+                date_el = item.find("pubDate")
+                if title_el is None or link_el is None:
+                    continue
+                title = title_el.text.strip() if title_el.text else ""
+                link = link_el.text.strip() if link_el.text else ""
+                # parse date — some feeds use RFC 822, some don't
+                pub_date = None
+                if date_el is not None and date_el.text:
+                    try:
+                        pub_date = parsedate_to_datetime(date_el.text.strip())
+                    except Exception:
+                        pass
+                # filter to last N days (if date available)
+                if pub_date and pub_date < cutoff:
+                    continue
+                if title and link:
+                    items.append({
+                        "source": source,
+                        "title": title,
+                        "link": link,
+                        "date": pub_date.strftime("%a %d %b") if pub_date else "",
+                    })
+            print(f"[ok] {source}: {sum(1 for i in items if i['source']==source)} items")
+        except Exception as e:
+            print(f"[warn] RSS failed for {source}: {e}")
+    # sort by date descending (undated items at the end)
+    items.sort(key=lambda x: x["date"] if x["date"] else "", reverse=True)
+    return items
+
+
+def demo_rss():
+    """Offline sample headlines."""
+    return [
+        {"source": "Federal Reserve", "title": "Governor Waller: Outlook for the Economy and Monetary Policy",
+         "link": "https://www.federalreserve.gov/newsevents/speech/waller20260807a.htm",
+         "date": "Thu 07 Aug"},
+        {"source": "Federal Reserve", "title": "Federal Reserve issues FOMC statement",
+         "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260805a.htm",
+         "date": "Tue 05 Aug"},
+        {"source": "ECB", "title": "Monetary policy decisions",
+         "link": "https://www.ecb.europa.eu/press/pr/date/2026/html/ecb.mp260807.en.html",
+         "date": "Thu 07 Aug"},
+        {"source": "Bank of England", "title": "MPC holds Bank Rate at 4.50%",
+         "link": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/2026/august-2026",
+         "date": "Thu 07 Aug"},
+        {"source": "US Treasury", "title": "Quarterly Refunding Statement of Acting Assistant Secretary for Financial Markets",
+         "link": "https://home.treasury.gov/news/press-releases/jy20260806",
+         "date": "Wed 06 Aug"},
+        {"source": "BLS", "title": "Consumer Price Index — July 2026",
+         "link": "https://www.bls.gov/news.release/cpi.nr0.htm",
+         "date": "Tue 05 Aug"},
+    ]
+
+
+# ---------------------------------------------------------------------------
 # FRED SERIES CONFIG
 # ---------------------------------------------------------------------------
 RATES = [
@@ -321,7 +410,7 @@ def fmt_delta(d):
     return f"{d:+d}"
 
 
-def build_md(data, g7, spreads, cross, path):
+def build_md(data, g7, spreads, cross, rss, path):
     asof = dt.date.fromisoformat(data["asof"]).strftime("%A, %d %B %Y")
     L = []
     a = L.append
@@ -418,6 +507,19 @@ def build_md(data, g7, spreads, cross, path):
             a(f"| {c['label']} | {c['level']} | {d} |")
         a("")
 
+    # -- CENTRAL BANK & DATA RELEASES (last 7 days)
+    if rss:
+        a("---")
+        a("")
+        a("## Key Releases (Last 7 Days)")
+        a("")
+        a("| Date | Source | Headline |")
+        a("|:-----|:-------|:---------|")
+        for item in rss:
+            date = item["date"] if item["date"] else "—"
+            a(f"| {date} | {item['source']} | [{item['title']}]({item['link']}) |")
+        a("")
+
     # -- SOURCES
     a("---")
     a("")
@@ -487,13 +589,15 @@ def main():
         data = pull_live(api)
         g7 = read_yields_csv(args.csv)
         cross = pull_cross(api)
+        rss = pull_rss(days=7)
     else:
         data = demo_data()
         g7 = demo_g7()
         cross = demo_cross()
+        rss = demo_rss()
 
     spreads = compute_spreads(data["rates"], g7)
-    path, md = build_md(data, g7, spreads, cross, args.out)
+    path, md = build_md(data, g7, spreads, cross, rss, args.out)
     print(f"Built {path}")
 
     if args.email:
