@@ -1,8 +1,8 @@
-name: G7 + EM Rates Weekly Briefing
+name: G7 Rates Weekly
 
 on:
   schedule:
-    - cron: "0 16 * * 0"        # every Sunday 16:00 UTC = 22:00 Bishkek (UTC+6)
+    - cron: "0 16 * * 0"        # Sunday 16:00 UTC = 22:00 Bishkek (UTC+6)
   workflow_dispatch: {}          # manual trigger from Actions tab
 
 jobs:
