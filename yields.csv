@@ -1,0 +1,19 @@
+market,maturity,yield,yield_1w
+UK Gilt,2Y,4.25,4.20
+UK Gilt,10Y,4.58,4.50
+UK Gilt,30Y,4.92,4.85
+Bund,2Y,2.42,2.35
+Bund,10Y,2.68,2.60
+Bund,30Y,2.85,2.78
+OAT,2Y,2.65,2.58
+OAT,10Y,3.32,3.25
+OAT,30Y,3.75,3.68
+BTP,2Y,2.95,2.88
+BTP,10Y,3.85,3.78
+BTP,30Y,4.45,4.38
+JGB,2Y,0.35,0.32
+JGB,10Y,1.28,1.22
+JGB,30Y,2.18,2.12
+Canada,2Y,3.15,3.10
+Canada,10Y,3.45,3.40
+Canada,30Y,3.55,3.50
