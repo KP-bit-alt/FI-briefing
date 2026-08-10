@@ -273,7 +273,11 @@ def read_yields_csv(path):
                 market = row["market"].strip()
                 mat = row["maturity"].strip()
                 tw = float(row["yield"].strip())
-                lw = float(row["yield_1w"].strip())
+                # accept both "yield_1w" and "yield_1w_ago" as the prior-week column
+                lw_raw = row.get("yield_1w") or row.get("yield_1w_ago")
+                if lw_raw is None:
+                    raise KeyError("neither 'yield_1w' nor 'yield_1w_ago' found")
+                lw = float(lw_raw.strip())
                 delta = round((tw - lw) * 100)
                 if market not in data:
                     data[market] = OrderedDict()
