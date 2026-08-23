@@ -1,10 +1,10 @@
 market,maturity,yield,yield_1w_ago
-UK Gilt,2Y,4.42,4.29
-UK Gilt,10Y,5.04,4.92
-UK Gilt,30Y,5.79,5.66
-Bund,2Y,2.79,2.73
-Bund,10Y,3.21,3.13
-Bund,30Y,3.73,3.64
+UK Gilt,2Y,4.42,4.42
+UK Gilt,10Y,5.04,5.04
+UK Gilt,30Y,5.79,5.79
+Bund,2Y,2.79,2.79
+Bund,10Y,3.21,3.21
+Bund,30Y,3.73,3.73
 OAT,2Y,2.98,2.92
 OAT,10Y,4.06,3.91
 OAT,30Y,4.85,4.71
